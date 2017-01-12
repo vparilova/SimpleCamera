@@ -32,15 +32,15 @@ import java.io.IOException;
 import java.util.concurrent.Semaphore;
 
 public class MainActivity extends AppCompatActivity {
-//    //private final static String DEBUG_TAG = "MainActivity";
-//    private static Camera camera = null;
-//    private Camera.Parameters camParams;
+    private final static String DEBUG_TAG = "MainActivity";
+    private static Camera camera = null;
+    private static Camera.Parameters camParams;
     private SurfaceView surfaceView;
-    private SurfaceHolder surfaceHolder;
+    public static SurfaceHolder surfaceHolder;
     private Camera.ShutterCallback shutter;
     private Camera.PictureCallback jpegPic;
-    private Camera.PreviewCallback preview;
-    private SurfaceHolder.Callback surfaceHolderCallback;
+    //private Camera.PreviewCallback preview;
+    //private SurfaceHolder.Callback surfaceHolderCallback;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,65 +50,55 @@ public class MainActivity extends AppCompatActivity {
         Button recButton = (Button) findViewById(R.id.buttonID);
         recButton.setOnClickListener(new View.OnClickListener(){
             public void onClick(View v){
-                takePicture();
+                //takePicture();
             }
         });
     }
 
     public void setUpCamera(){
-//        int numOfCams = Camera.getNumberOfCameras();
-//        int cameraID = -1;
-//        if(numOfCams > 1){
-//            for (int i = 0; i < numOfCams; i++) {
-//                Camera.CameraInfo info = new Camera.CameraInfo();
-//                Camera.getCameraInfo(i, info);
-//                if (info.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
-//                    Log.d(DEBUG_TAG, "Camera found");
-//                    cameraID = i;
-//                    break;
-//                }
-//            }
-//        } else cameraID = numOfCams;
+        int numOfCams = Camera.getNumberOfCameras();
+        int cameraID = -1;
+        if(numOfCams > 1){
+            for (int i = 0; i < numOfCams; i++) {
+                Camera.CameraInfo info = new Camera.CameraInfo();
+                Camera.getCameraInfo(i, info);
+                if (info.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
+                    Log.d(DEBUG_TAG, "Camera found");
+                    cameraID = i;
+                    break;
+                }
+            }
+        } else cameraID = numOfCams;
 //        DevicePolicyManager dpm = (DevicePolicyManager) this.getSystemService(Context.DEVICE_POLICY_SERVICE);
 //        if (dpm.getCameraDisabled(null)) {
 //            System.out.println("Disabled Camera");
 //        }
-//        try {
-//            camera = Camera.open(cameraID);
-//            System.out.println("Camera opened");
-//        } catch (RuntimeException e) {
-//            e.printStackTrace();
-//        }
-//        camParams = camera.getParameters();
-        setCameraDisplayOrientation(this, cameraID, camera);
-        System.out.println("Set display");
-        surfaceView = (SurfaceView)findViewById(R.id.surfaceVewID);
-        surfaceHolder = surfaceView.getHolder();
-        //surfaceHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
-        surfaceHolderCallback = new SurfaceHolder.Callback() {
-            public void surfaceDestroyed(SurfaceHolder holder) {
-                //surfaceView = null;
-                System.out.println("===================== Video capture surface destroyed");
-                //camera.stopPreview();
-                //camera.release();
-                //camera = null;
-            }
-            public void surfaceCreated(SurfaceHolder holder) {
-                //surfaceView = (SurfaceView)findViewById(R.id.surfaceVewID);
-                System.out.println("===================== Video capture surface created");
-            }
-            public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-                System.out.println("===================== Video capture surface changed");
-            }
-        };
-        surfaceHolder.addCallback(surfaceHolderCallback);
-        System.out.println("Set view and holder");
         try {
-            camera.setPreviewDisplay(surfaceHolder);
-            System.out.println("Set preview display");
-        } catch (IOException e) {
+            camera = Camera.open(cameraID);
+            System.out.println("Camera opened");
+        } catch (RuntimeException e) {
             e.printStackTrace();
         }
+//        camParams = camera.getParameters();
+//        setCameraDisplayOrientation(this, cameraID, camera);
+        System.out.println("=================================================Set surfaceView");
+        surfaceView = (SurfaceView)findViewById(R.id.surfaceVewID);
+        System.out.println("=================================================Set surfaceHolder");
+        surfaceHolder = surfaceView.getHolder();
+        //surfaceHolderCallback = new Preview();
+        //createCallBack();
+        System.out.println("=================================================Add Callback");
+        surfaceHolder.addCallback(surfaceHolderCallback);
+        System.out.println("=================================================Set Type");
+        surfaceHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
+        //surfaceView = new Preview(this);
+//        System.out.println("Set view and holder");
+//        try {
+//            camera.setPreviewDisplay(surfaceHolder);
+//            System.out.println("Set preview display");
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
         //Camera.release();
     }
 
@@ -155,4 +145,111 @@ public class MainActivity extends AppCompatActivity {
         }
         camera.setDisplayOrientation(result);
     }
+
+    private static Camera.PreviewCallback previewCallback = new Camera.PreviewCallback() {
+
+        @Override
+        public void onPreviewFrame(byte[] data, Camera cam) {
+            System.out.println("=================================================previewCallback");
+            // process preview data here .
+        }
+    };
+
+    private static SurfaceHolder.Callback surfaceHolderCallback = new SurfaceHolder.Callback() {
+        @Override
+        public void surfaceCreated(SurfaceHolder holder) {
+            System.out.println("=================================================surfaceHolderCallback surfaceCreated");
+            try {
+                camera.setPreviewDisplay(surfaceHolder);
+                camera.setPreviewCallback(previewCallback);
+            } catch (Throwable t) {
+            }
+        }
+        @Override
+        public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+            System.out.println("=================================================surfaceHolderCallback surfaceChanged");
+            camParams = camera.getParameters();
+            //System.out.println("=================================================surfaceHolderCallback surfaceChanged 1");
+            //camParams.setFlashMode(Camera.Parameters.FLASH_MODE_TORCH);
+//            System.out.println("=================================================surfaceHolderCallback surfaceChanged 2");
+//            Camera.Size size = getSmallestPreviewSize(width, height, camParams);
+//            System.out.println("=================================================surfaceHolderCallback surfaceChanged 3");
+//            if (size != null) {
+//                System.out.println("=================================================surfaceHolderCallback surfaceChanged 4");
+//                camParams.setPreviewSize(size.width, size.height);
+//            }
+//            System.out.println("=================================================surfaceHolderCallback surfaceChanged 5");
+//            camera.setParameters(camParams);
+            System.out.println("=================================================surfaceHolderCallback surfaceChanged 6");
+            camera.startPreview();
+            System.out.println("=================================================surfaceHolderCallback surfaceChanged 7");
+        }
+        @Override
+        public void surfaceDestroyed(SurfaceHolder holder) {
+            System.out.println("=================================================surfaceHolderCallback surfaceDestroyed");
+            // Ignore
+        }
+    };
+
+    private static Camera.Size getSmallestPreviewSize(int width, int height, Camera.Parameters parameters) {
+        Camera.Size result = null;
+        System.out.println("=================================================getSmallestPreviewSize");
+        for (Camera.Size size : parameters.getSupportedPreviewSizes()) {
+            if (size.width <= width && size.height <= height) {
+                if (result == null) {
+                    result = size;
+                } else {
+                    int resultArea = result.width * result.height;
+                    int newArea = size.width * size.height;
+                    if (newArea < resultArea) result = size;
+                }
+            }
+        }
+        return result;
+    }
+
+//    public void createCallBack() {
+//        surfaceHolderCallback = new SurfaceHolder.Callback() {
+//            public void surfaceCreated(SurfaceHolder holder) {
+//                System.out.println("===================== Video capture surface created");
+////                int numOfCams = Camera.getNumberOfCameras();
+////                int cameraID = -1;
+////                if (numOfCams > 1) {
+////                    for (int i = 0; i < numOfCams; i++) {
+////                        Camera.CameraInfo info = new Camera.CameraInfo();
+////                        Camera.getCameraInfo(i, info);
+////                        if (info.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
+////                            Log.d(DEBUG_TAG, "Camera found");
+////                            cameraID = i;
+////                            break;
+////                        }
+////                    }
+////                } else cameraID = numOfCams;
+////                try {
+////                    camera = Camera.open(cameraID);
+////                    System.out.println("Camera opened");
+////                } catch (RuntimeException e) {
+////                    e.printStackTrace();
+////                }
+////                camParams = camera.getParameters();
+//                //setCameraDisplayOrientation(this, cameraID, camera);
+//            }
+//            public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+//                System.out.println("===================== Video capture surface changed");
+////                try {
+////                    camera.setPreviewDisplay(holder);
+////                } catch (IOException e) {
+////                    e.printStackTrace();
+////                }
+////                camera.startPreview();
+//            }
+//            public void surfaceDestroyed(SurfaceHolder holder) {
+//                //surfaceView = null;
+//                System.out.println("===================== Video capture surface destroyed");
+////                camera.stopPreview();
+////                camera.release();
+////                camera = null;
+//            }
+//        };
+//    }
 }
